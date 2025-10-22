@@ -60,6 +60,13 @@
       background-color: #1a252f;
     }
 
+    .btn-row {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
     .container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -125,6 +132,11 @@
     <button type="submit">Add Bug</button>
   </form>
 
+  <div class="btn-row">
+    <button onclick="saveBugs()">💾 Save State</button>
+    <button onclick="loadBugs()">📂 Load State</button>
+  </div>
+
   <div class="container">
     <div class="column must">
       <h2>Must Have</h2>
@@ -153,6 +165,44 @@
       wont: document.getElementById("wontList"),
     };
 
+    let bugs = [];
+
+    function renderBugs() {
+      // Clear all columns
+      for (const key in lists) {
+        lists[key].innerHTML = "";
+      }
+
+      // Re-render each bug
+      bugs.forEach(bug => {
+        const card = document.createElement("div");
+        card.className = "bug-card";
+        card.innerHTML = `<h3>${bug.title}</h3><p>${bug.description}</p>`;
+        lists[bug.priority].appendChild(card);
+      });
+    }
+
+    function saveBugs() {
+      localStorage.setItem("moscow_bugs", JSON.stringify(bugs));
+      alert("✅ State saved!");
+    }
+
+    function loadBugs() {
+      const stored = localStorage.getItem("moscow_bugs");
+      if (stored) {
+        bugs = JSON.parse(stored);
+        renderBugs();
+        alert("📂 State loaded!");
+      } else {
+        alert("⚠️ No saved state found.");
+      }
+    }
+
+    // Auto-load on page load
+    window.addEventListener("load", () => {
+      loadBugs();
+    });
+
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       const title = document.getElementById("title").value.trim();
@@ -161,12 +211,10 @@
 
       if (!title || !description || !priority) return;
 
-      const card = document.createElement("div");
-      card.className = "bug-card";
-      card.innerHTML = `<h3>${title}</h3><p>${description}</p>`;
-
-      lists[priority].appendChild(card);
-
+      const newBug = { title, description, priority };
+      bugs.push(newBug);
+      renderBugs();
+      saveBugs(); // Auto-save after add
       form.reset();
     });
   </script>
