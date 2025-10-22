@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MoSCoW Bug Triage</title>
+  <title>MoSCoW Bug Tracker</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -14,6 +14,9 @@
       --bg: #f4f4f4;
       --text: #2c3e50;
       --card-bg: #fff;
+      --green: #2a502d;
+      --green-light1: #3f6c44;
+      --green-light2: #558e5c;
       --border-radius: 10px;
       --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
@@ -31,7 +34,7 @@
     }
 
     form {
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto 2rem auto;
       background: var(--card-bg);
       padding: 1rem 1.5rem;
@@ -48,6 +51,11 @@
       font-size: 1rem;
     }
 
+    input:disabled, textarea:disabled, select:disabled {
+      background: #eee;
+      color: #666;
+    }
+
     button {
       background-color: var(--text);
       color: white;
@@ -58,10 +66,6 @@
 
     button:hover {
       background-color: #1a252f;
-    }
-
-    .accordion {
-      margin-top: 1rem;
     }
 
     .accordion h3 {
@@ -77,6 +81,31 @@
       margin-top: 1rem;
       border-top: 1px solid #ccc;
       padding-top: 1rem;
+    }
+
+    .triage-flex {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .triage-item {
+      flex: 1 1 calc(50% - 1rem);
+      display: flex;
+      align-items: center;
+      background: var(--green-light1);
+      color: white;
+      padding: 0.5rem;
+      border-radius: 6px;
+    }
+
+    .triage-item:nth-child(even) {
+      background: var(--green-light2);
+    }
+
+    .triage-item input {
+      margin-right: 0.5rem;
+      width: auto;
     }
 
     .suggestion {
@@ -122,6 +151,11 @@
       padding: 0.75rem;
       border-radius: 6px;
       border-left: 4px solid var(--text);
+      cursor: pointer;
+    }
+
+    .bug-card:hover {
+      background: #f0f0f0;
     }
 
     .bug-card h3 {
@@ -134,12 +168,28 @@
       font-size: 0.9rem;
     }
 
+    .bug-card small {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: #555;
+    }
+
     .charts {
       max-width: 900px;
       margin: 2rem auto;
     }
 
+    #addNewBtn {
+      display: none;
+      margin: 1rem auto;
+    }
+
     @media (max-width: 600px) {
+      .triage-item {
+        flex: 1 1 100%;
+      }
+
       .container {
         grid-template-columns: 1fr;
       }
@@ -151,92 +201,112 @@
   </style>
 </head>
 <body>
+  <h1>🛠️ MoSCoW Bug Triage Tracker</h1>
 
-<h1>🛠️ MoSCoW Bug Triage System</h1>
+  <form id="bugForm">
+    <input type="text" id="title" placeholder="Bug Title" required />
+    <textarea id="description" placeholder="Bug Description" rows="3" required></textarea>
 
-<form id="bugForm">
-  <input type="text" id="title" placeholder="Bug Title" required />
-  <textarea id="description" placeholder="Bug Description" rows="3" required></textarea>
-  
-  <div class="accordion">
-    <h3 onclick="toggleAccordion()">+ Triage Details</h3>
-    <div class="accordion-content" id="triageFields">
-      <label><input type="checkbox" id="affectsPayroll"> Affects Payroll/W2/PTO?</label><br/>
-      <label><input type="checkbox" id="dataLoss"> Data loss, corruption, security breach?</label><br/>
-      <label><input type="checkbox" id="systemDown"> System unavailable?</label><br/>
-      <label><input type="checkbox" id="isBlockingTeam"> Blocking Implementation or Training Team?</label><br/>
-      <label><input type="checkbox" id="financialImpact"> Financial penalty likely?</label><br/>
-      <label><input type="checkbox" id="primaryFunction"> Affects Primary Function?</label><br/>
-      <label><input type="checkbox" id="workaroundExists"> Workaround Exists?</label><br/>
-      <label><input type="checkbox" id="performanceDegraded"> Performance Significantly Degraded?</label><br/>
-      <label>Bug or Improvement?
-        <select id="isBug">
-          <option value="bug">Bug</option>
-          <option value="improvement">Improvement</option>
-        </select>
-      </label><br/>
-      <label>Customer Count Affected:
-        <select id="customerCount">
-          <option value="none">None</option>
-          <option value="few">Few</option>
-          <option value="many">Many</option>
-          <option value="all">All</option>
-        </select>
-      </label>
+    <div class="accordion">
+      <h3 onclick="toggleAccordion()">+ Triage Details</h3>
+      <div class="accordion-content" id="triageFields">
+        <div class="triage-flex">
+          <label class="triage-item">
+            <input type="checkbox" id="affectsPayroll" /> Affects Payroll/W2/PTO?
+          </label>
+          <label class="triage-item">
+            <input type="checkbox" id="dataLoss" /> Data loss, corruption, breach?
+          </label>
+          <label class="triage-item">
+            <input type="checkbox" id="systemDown" /> System unavailable?
+          </label>
+          <label class="triage-item">
+            <input type="checkbox" id="isBlockingTeam" /> Blocking implementation team?
+          </label>
+          <label class="triage-item">
+            <input type="checkbox" id="financialImpact" /> Financial impact?
+          </label>
+          <label class="triage-item">
+            <input type="checkbox" id="primaryFunction" /> Primary function affected?
+          </label>
+          <label class="triage-item">
+            <input type="checkbox" id="workaroundExists" /> Workaround exists?
+          </label>
+          <label class="triage-item">
+            <input type="checkbox" id="performanceDegraded" /> Performance degraded?
+          </label>
+        </div>
+
+        <label>Bug or Improvement?
+          <select id="isBug">
+            <option value="bug">Bug</option>
+            <option value="improvement">Improvement</option>
+          </select>
+        </label>
+        <label>Customer Count Affected:
+          <select id="customerCount">
+            <option value="none">None</option>
+            <option value="few">Few</option>
+            <option value="many">Many</option>
+            <option value="all">All</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="suggestion">
+      Suggested Triage Level: <strong id="triageLevel">-</strong> |
+      Suggested MoSCoW Priority: <strong id="suggestedPriority">-</strong>
+    </div>
+
+    <select id="priority" required>
+      <option value="">Select MoSCoW Priority</option>
+      <option value="must">Must</option>
+      <option value="should">Should</option>
+      <option value="could">Could</option>
+      <option value="wont">Won't</option>
+    </select>
+
+    <button type="submit">Add Bug</button>
+    <button id="addNewBtn" type="button" onclick="clearForm()">🔄 Add New</button>
+  </form>
+
+  <div class="btn-row">
+    <button onclick="saveBugs()">💾 Save State</button>
+    <button onclick="loadBugs()">📂 Load State</button>
+  </div>
+
+  <div class="charts">
+    <canvas id="moscowChart"></canvas>
+    <br/>
+    <canvas id="triageChart"></canvas>
+  </div>
+
+  <div class="container">
+    <div class="column must">
+      <h2>Must Have</h2>
+      <div id="mustList"></div>
+    </div>
+    <div class="column should">
+      <h2>Should Have</h2>
+      <div id="shouldList"></div>
+    </div>
+    <div class="column could">
+      <h2>Could Have</h2>
+      <div id="couldList"></div>
+    </div>
+    <div class="column wont">
+      <h2>Won't Have</h2>
+      <div id="wontList"></div>
     </div>
   </div>
-
-  <div class="suggestion">
-    Suggested Triage Level: <strong id="triageLevel">-</strong> |
-    Suggested MoSCoW Priority: <strong id="suggestedPriority">-</strong>
-  </div>
-
-  <select id="priority" required>
-    <option value="">Select MoSCoW Priority</option>
-    <option value="must">Must</option>
-    <option value="should">Should</option>
-    <option value="could">Could</option>
-    <option value="wont">Won't</option>
-  </select>
-
-  <button type="submit">Add Bug</button>
-</form>
-
-<div class="btn-row">
-  <button onclick="saveBugs()">💾 Save State</button>
-  <button onclick="loadBugs()">📂 Load State</button>
-</div>
-
-<div class="charts">
-  <canvas id="moscowChart"></canvas>
-  <br/>
-  <canvas id="triageChart"></canvas>
-</div>
-
-<div class="container">
-  <div class="column must">
-    <h2>Must Have</h2>
-    <div id="mustList"></div>
-  </div>
-  <div class="column should">
-    <h2>Should Have</h2>
-    <div id="shouldList"></div>
-  </div>
-  <div class="column could">
-    <h2>Could Have</h2>
-    <div id="couldList"></div>
-  </div>
-  <div class="column wont">
-    <h2>Won't Have</h2>
-    <div id="wontList"></div>
-  </div>
-</div>
 <script>
   const form = document.getElementById("bugForm");
   const prioritySelect = document.getElementById("priority");
   const triageLevelText = document.getElementById("triageLevel");
   const suggestedPriorityText = document.getElementById("suggestedPriority");
   const accordionContent = document.getElementById("triageFields");
+  const addNewBtn = document.getElementById("addNewBtn");
 
   const lists = {
     must: document.getElementById("mustList"),
@@ -246,13 +316,11 @@
   };
 
   let bugs = [];
-
-  // Chart instances
+  let isReadOnly = false;
   let moscowChart, triageChart;
 
   function toggleAccordion() {
-    accordionContent.style.display =
-      accordionContent.style.display === "block" ? "none" : "block";
+    accordionContent.style.display = accordionContent.style.display === "block" ? "none" : "block";
   }
 
   function calculateTriageLevel() {
@@ -265,56 +333,29 @@
       primaryFunction: document.getElementById("primaryFunction").checked,
       workaroundExists: document.getElementById("workaroundExists").checked,
       performanceDegraded: document.getElementById("performanceDegraded").checked,
-      isBug: document.getElementById("isBug").value,
-      customerCount: document.getElementById("customerCount").value,
     };
 
-    // Determine severity score
     let score = 4;
-
-    if (
-      triage.affectsPayroll ||
-      triage.dataLoss ||
-      triage.systemDown ||
-      triage.isBlockingTeam ||
-      triage.financialImpact
-    ) {
+    if (triage.affectsPayroll || triage.dataLoss || triage.systemDown || triage.isBlockingTeam || triage.financialImpact) {
       score = 1;
-    } else if (
-      (triage.primaryFunction && !triage.workaroundExists) ||
-      (triage.performanceDegraded && triage.primaryFunction)
-    ) {
+    } else if ((triage.primaryFunction && !triage.workaroundExists) || (triage.performanceDegraded && triage.primaryFunction)) {
       score = 2;
-    } else if (
-      (!triage.primaryFunction && !triage.workaroundExists) ||
-      (triage.performanceDegraded && !triage.primaryFunction)
-    ) {
+    } else if ((!triage.primaryFunction && !triage.workaroundExists) || (triage.performanceDegraded && !triage.primaryFunction)) {
       score = 3;
-    } else {
-      score = 4;
     }
 
-    // Translate score
-    const severityMap = {
-      1: "Critical",
-      2: "High",
-      3: "Medium",
-      4: "Low"
-    };
-
-    const moscowMap = {
-      1: "Must",
-      2: "Should",
-      3: "Could",
-      4: "Won't"
-    };
+    const severityMap = { 1: "Critical", 2: "High", 3: "Medium", 4: "Low" };
+    const moscowMap = { 1: "Must", 2: "Should", 3: "Could", 4: "Won't" };
 
     triageLevelText.textContent = severityMap[score];
     suggestedPriorityText.textContent = moscowMap[score];
     return { severity: severityMap[score], suggested: moscowMap[score] };
   }
 
-  form.addEventListener("input", calculateTriageLevel);
+  form.addEventListener("input", () => {
+    if (!isReadOnly) calculateTriageLevel();
+  });
+
   window.addEventListener("load", () => {
     loadBugs();
     calculateTriageLevel();
@@ -322,20 +363,24 @@
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    if (isReadOnly) return;
+
     const title = document.getElementById("title").value.trim();
     const description = document.getElementById("description").value.trim();
     const priority = prioritySelect.value;
+    const triage = calculateTriageLevel();
 
     if (!title || !description || !priority) return;
 
-    const triage = calculateTriageLevel();
+    const timestamp = new Date().toLocaleString();
 
     const newBug = {
       title,
       description,
       priority,
       triageLevel: triage.severity,
-      suggestedPriority: triage.suggested
+      suggestedPriority: triage.suggested,
+      timestamp,
     };
 
     bugs.push(newBug);
@@ -346,28 +391,51 @@
   });
 
   function renderBugs() {
-    // Clear lists
     for (const key in lists) lists[key].innerHTML = "";
 
-    // Count trackers for chart
     const moscowCounts = { must: 0, should: 0, could: 0, wont: 0 };
     const triageCounts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
 
-    // Render bugs
-    bugs.forEach(bug => {
+    bugs.forEach((bug, index) => {
       const card = document.createElement("div");
       card.className = "bug-card";
       card.innerHTML = `<h3>${bug.title}</h3>
         <p>${bug.description}</p>
-        <small><strong>Triage:</strong> ${bug.triageLevel} | <strong>Suggested:</strong> ${bug.suggestedPriority}</small>`;
+        <small><strong>Triage:</strong> ${bug.triageLevel} | <strong>MoSCoW:</strong> ${bug.suggestedPriority}</small>
+        <small><em>${bug.timestamp}</em></small>`;
+      card.onclick = () => loadBugIntoForm(index);
       lists[bug.priority].appendChild(card);
 
-      // Count for charts
       moscowCounts[bug.priority]++;
       triageCounts[bug.triageLevel]++;
     });
 
     updateCharts(moscowCounts, triageCounts);
+  }
+
+  function loadBugIntoForm(index) {
+    const bug = bugs[index];
+    isReadOnly = true;
+    addNewBtn.style.display = "block";
+
+    document.getElementById("title").value = bug.title;
+    document.getElementById("description").value = bug.description;
+    prioritySelect.value = bug.priority;
+
+    document.querySelectorAll("input, textarea, select").forEach(el => {
+      el.disabled = true;
+    });
+
+    triageLevelText.textContent = bug.triageLevel;
+    suggestedPriorityText.textContent = bug.suggestedPriority;
+  }
+
+  function clearForm() {
+    isReadOnly = false;
+    addNewBtn.style.display = "none";
+    form.reset();
+    document.querySelectorAll("input, textarea, select").forEach(el => el.disabled = false);
+    calculateTriageLevel();
   }
 
   function saveBugs() {
@@ -397,9 +465,7 @@
           moscowCounts.could,
           moscowCounts.wont
         ],
-        backgroundColor: [
-          "#e74c3c", "#e67e22", "#3498db", "#95a5a6"
-        ]
+        backgroundColor: ["#e74c3c", "#e67e22", "#3498db", "#95a5a6"]
       }]
     };
 
@@ -413,9 +479,7 @@
           triageCounts.Medium,
           triageCounts.Low
         ],
-        backgroundColor: [
-          "#c0392b", "#d35400", "#2980b9", "#7f8c8d"
-        ]
+        backgroundColor: ["#c0392b", "#d35400", "#2980b9", "#7f8c8d"]
       }]
     };
 
